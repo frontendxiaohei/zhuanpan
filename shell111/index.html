@@ -1,0 +1,305 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>简单转盘</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.bootcss.com/animate.css/3.7.0/animate.css" rel="stylesheet">
+  <link rel="stylesheet" href="./css/index.css">
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <div class="turntable-wrap">
+      <div class="light" id="turntable_light"></div>
+      <div class="turntable" id="turntable">
+        <ul class="bg" id="turntable_bg"></ul>
+        <ul class="gift" id="turntable_gift"></ul>
+      </div>
+      <div class="pointer disabled" id="turntable_pointer">
+        <p>
+          开始
+        </p>
+        <p>抽奖</p>
+      </div>
+      
+    </div>
+    <div class="jifen">
+      <div class="jifen-zi">可用积分</div>
+      <div class="jifen-shuzi">894</div>
+    </div>
+    <div class="my-jiangpin">
+      我的奖品
+    </div>
+    <div class="zj-message">
+      <div class="zj-btn">中奖信息</div>
+      <div class="box">
+        <ul>
+          <li>
+            <span>183****833</span>
+            <span>一等奖</span>
+            <span>华为p30(8+64g手机一台)</span>
+          </li>
+          <li>
+            <span>183****833</span>
+            <span>一等奖</span>
+            <span>华为p30(8+64g手机一台)</span>
+          </li>
+          <li>
+            <span>183****833</span>
+            <span>一等奖</span>
+            <span>华为p30(8+64g手机一台)</span>
+          </li>
+          <li>
+            <span>183****833</span>
+            <span>一等奖</span>
+            <span>华为p30(8+64g手机一台)</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="activity-rule">
+      <div class="activity-btn">活动规则</div>
+      <div class="activity-box"></div>
+    </div>
+    <div class="alert alert1 animated" id="alert1">
+      <div class="alert-inner">
+        <button class="my_jp">我的奖品</button>
+        <p class="congr">恭喜获得</p>
+        <div class="ydj">
+          一等奖
+        </div>
+        <div class="lxfs">
+          请填写你的联系方式, 以便领取奖品
+        </div>
+      </div>
+      <div class="back back1" id="back"></div>
+    </div>
+    <div class="alert alert2 animated" id="alert2">
+      <div class="alert-inner">
+        <button class="my_jp">我的奖品</button>
+        <p class="congr">恭喜获得</p>
+        <div class="ydj">
+          二等奖
+        </div>
+        <div class="lxfs">
+          请填写你的联系方式, 以便领取奖品
+        </div>
+      </div>
+      <div class="back back2"></div>
+    </div>
+    <div class="alert alert3 animated" id="alert3">
+      <div class="alert-inner">
+        <button class="my_jp">我的奖品</button>
+        <p class="congr">恭喜获得</p>
+        <div class="ydj">
+          三等奖
+        </div>
+        <div class="lxfs">
+          请填写你的联系方式, 以便领取奖品
+        </div>
+      </div>
+      <div class="back back3"></div>
+    </div>
+    <div class="alert alert4 animated" id="alert4">
+      <div class="alert-inner">
+        <button class="my_jp">我的奖品</button>
+        <p class="congr">恭喜获得</p>
+        <div class="ydj">
+          四等奖
+        </div>
+        <div class="lxfs">
+          请填写你的联系方式, 以便领取奖品
+        </div>
+      </div>
+      <div class="back back4"></div>
+    </div>
+  </div>
+  <script src="https://cdn.bootcss.com/zepto/1.2.0/zepto.js"></script>
+  <script>
+    let htmlWidth = document.documentElement.clientWidth || document.body.clientWidth;
+  let htmlDom = document.getElementsByTagName('html')[0];
+  if (htmlWidth > 750) {
+    htmlWidth = 750
+  }
+  htmlDom.style.fontSize = htmlWidth / 20 + 'px';
+    // 单例模式，转盘唯一，用对象字面量方式表示
+    let turntable = {
+      itemNum: 6, // 转盘平均分几块
+
+      lightNum: 18, // 转盘上的灯
+      light: null, // 转盘旋转灯容器
+
+      turntable: null, // 转盘
+
+      bg: null, // 转盘背景
+
+      gift: null, // 转盘上的中奖结果图
+
+      pointer: null, // 转盘指针
+
+      lottery: [], // 中奖数据
+
+      typeMap: {
+        1: '',
+        2: ''
+      },
+      typeClassMap: {
+        1: '',
+        2: ''
+      },
+
+      isGoing: false, // 游戏是否开始
+
+      init() {
+        if (!this.lottery.length) {
+          this.pointer.style.display = 'none';
+          throw new Error('请设置中奖结果数据');
+        }
+
+        // 初始化灯
+        let lightFragment = document.createDocumentFragment();
+        for (let i = 0; i < this.lightNum; i++) {
+          let lightItem = document.createElement('span');
+          let deg = (360 / this.lightNum) * i
+          lightItem.style.transform = `rotate(${deg}deg)`;
+          lightFragment.appendChild(lightItem);
+        }
+        this.light.appendChild(lightFragment);
+
+        // 初始化转盘背景、转盘上的中奖图（用不同背景色代替）
+        let bgFragment = document.createDocumentFragment();
+        let bgItemWidth = this.bg.offsetWidth / this.num;
+        let giftFragment = document.createDocumentFragment();
+        for (let i = 0; i < this.itemNum; i++) {
+          let bgItem = document.createElement('li');
+          let deg = (360 / this.itemNum) * i
+          bgItem.style.transform = `rotate(${deg}deg)`;
+          bgFragment.appendChild(bgItem);
+
+          let giftItem = document.createElement('li');
+          giftItem.style.transform = `rotate(${deg}deg)`;
+          giftItem.className = this.typeClassMap[this.lottery[i].type];
+          let span = document.createElement('span');
+          span.innerHTML = this.typeMap[this.lottery[i].type];
+          giftItem.appendChild(span);
+          giftFragment.appendChild(giftItem)
+        }
+        this.bg.appendChild(bgFragment);
+        this.gift.appendChild(giftFragment);
+
+        // 给点击抽奖按钮添加点击事件
+        this.pointer.onclick = this.gameStart.bind(this)
+      },
+
+      gameStart() {
+        if (this.isGoing) {
+          return
+        }
+        this.isGoing = true;
+
+        // 1. 随机中奖结果
+        // 从1-100之间得到一个随机数，看这个随机数在中奖设置的范围，得到最终中奖的项
+        let randomRate = ~~(Math.random() * 100) // ~~ == Math.floor()
+        // 设置中奖数据的概率范围
+        let num = 0
+        this.lottery.forEach(item => {
+          item.min = num;
+          num += item.rate;
+          item.max = num;
+        })
+        // 根据随机数，得到中奖结果
+        let res = this.lottery.filter(item => {
+          return randomRate >= item.min && randomRate < item.max;
+        })[0];
+        // 这儿可以根据实际情况，可重置中奖结果
+
+        // 2. 计算旋转角度, 需要多转5圈，达转1圈用时1s, 到旋转的效果
+        let rotateItemDeg = (res.location - 1) * (360 / this.lottery.length); // 每个item旋转角度, 第一个不用旋转
+        let rotate = rotateItemDeg + 5 * 360;
+        let rotateSpeed = (rotateItemDeg / 360 * 1 + 5).toFixed(2);
+        // 重置转盘样式
+        this.turntable.removeAttribute('style');
+        // 保证下一次旋转动画生效
+        setTimeout(() => {
+          this.turntable.style.transform = `rotate(${rotate}deg)`;
+          this.turntable.style.transition = `transform ${rotateSpeed}s ease-out`;
+        }, 10)
+
+        // 3. 动画结束，显示中奖结果，中奖结果如何显示，视实际情况而定
+        setTimeout(() => {
+          this.isGoing = false;
+          console.log('中奖结果：', randomRate, res, this.typeMap[res.type]);
+          
+          if(res.location == 2) {
+            
+            $("#alert2").show()
+            // alert1.className = "alert animated fadeInDownLeft"
+          } else if(res.location == 6) {
+            alert1.style.display = "block";
+          }else if(res.location == 5) {
+            
+            $("#alert4").show()
+          }else if(res.location == 3) {
+            $("#alert3").show()
+          }
+        }, rotateSpeed * 1000);
+      }
+    }
+    $(".back1").click(function () {
+      $("#alert1").hide()
+    })
+    $(".back2").click(function () {
+      $("#alert2").hide()
+    })
+    $(".back3").click(function () {
+      $("#alert3").hide()
+    })
+    $(".back4").click(function () {
+      $("#alert4").hide()
+    })
+    let lottery = [{
+        location: 1, // 位置
+        type: 1, // 中奖
+        rate: 30,
+      },
+      {
+        location: 2,
+        type: 2, // 未中奖
+        rate: 20
+      },
+      {
+        location: 3,
+        type: 1,
+        rate: 10
+      },
+      {
+        location: 4,
+        type: 2,
+        rate: 20
+      },
+      {
+        location: 5,
+        type: 1,
+        rate: 10
+      },
+      {
+        location: 6,
+        type: 1,
+        rate: 100
+      }
+    ];
+    let alert = document.getElementById('alert');
+    turntable.turntable = document.querySelector('#turntable');
+    turntable.light = document.querySelector('#turntable_light');
+    turntable.bg = document.querySelector('#turntable_bg');
+    turntable.gift = document.querySelector('#turntable_gift');
+    turntable.pointer = document.querySelector('#turntable_pointer');
+    turntable.lottery = lottery;
+    turntable.init();
+  </script>
+</body>
+
+</html>
